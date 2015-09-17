@@ -21,7 +21,6 @@ const {topSites, group} = require('./TopSites.js');
 //var preference = JSON.parse(prefs.getCharPref('TopSites'));
 var counter = 1, total = topSites.length;
 
-
 const contentScripts = [
   data.url('lzma.js'),
   data.url('lzma_worker.js'),
