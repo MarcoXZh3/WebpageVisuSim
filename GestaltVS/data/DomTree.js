@@ -56,6 +56,6 @@ function DomTree(root, name) {
     } // while (child)
   }; // var buildUpTree = function(domNode, domTreeNode)
 
-  buildUpTree(this.root.domNode, root);
+  buildUpTree(this.root.domNode, this.root);
 } // function DomTree(root, name)
 

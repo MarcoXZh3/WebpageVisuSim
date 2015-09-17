@@ -76,8 +76,9 @@ self.port.on('request-BlockTree', function(startTime) {
  * Register event handlers of the menu item - "AnalyzePage"
  */
 self.port.on('request-AnalyzePage', function(startTime) {
-  var layerTree = new LayerTree(new LayerTreeNode(document.body, document.body.tagName), document.URL),
-      mergingResults = [];
+  var domTree = new DomTree(new DomTreeNode(document.body), document.URL);
+  var layerTree = new LayerTree(new LayerTreeNode(document.body, document.body.tagName), document.URL);
+  var mergingResults = [];
   getAllLaws(layerTree.root, mergingResults);
   var str = '';
   for (i in mergingResults) {
@@ -87,6 +88,6 @@ self.port.on('request-AnalyzePage', function(startTime) {
   } // for (i in mergingResults)
   var blockTree = new BlockTree(new BlockTreeNode([layerTree.root], '/[BODY]'), document.URL);
   blockTree.buildUpTree(mergingResults);
-  str = [str, layerTree.toString(), blockTree.toString()].join('<br/><br/><br/><br/><br/>');
+  str = [str, domTree.toString(), layerTree.toString(), blockTree.toString()].join('<br/><br/><br/><br/><br/>');
   self.port.emit('response-AnalyzePage', new Date().getTime() - startTime, str);
 }); // self.port.on('request-AnalyzePage', function(startTime) { ... });

@@ -21,6 +21,7 @@ const {topSites, group} = require('./TopSites.js');
 //var preference = JSON.parse(prefs.getCharPref('TopSites'));
 var counter = 1, total = topSites.length;
 
+
 const contentScripts = [
   data.url('lzma.js'),
   data.url('lzma_worker.js'),
@@ -71,7 +72,9 @@ const panel = require('sdk/panel').Panel({
     var handler = function() {
       panel.hide();
       if (mi.id == 'BatchCrawling')
-        BatchCrawl(mi.id);
+        BatchCrawl();
+      else if (mi.id == 'AnalyzePage')
+        AnalyzePage(tabs.activeTab);
       else
         EventHandler(mi.id);
     }; // var handler = function() { ... };
@@ -102,9 +105,8 @@ const EventHandler = (event) => {
 
 /**
  * Event handler of each menu item clicking: BatchCrawling
- * @param event     (<code>string</code>) The event of the caller (menu item id)
  */
-const BatchCrawl = (event) => {
+const BatchCrawl = () => {
   counter = 1;
   var links = [];
   for (i in topSites)
@@ -112,22 +114,22 @@ const BatchCrawl = (event) => {
   var urls = links.splice(0, group);
   for (i in urls)
     tabs.open({ url: urls[i], inBackground: true,
-                onLoad: function(tab){try{Screenshot(tab);}catch(err){tab.close();}} });
+                onLoad: function(tab){try{AnalyzePage(tab, function(){tab.close();});}catch(err){tab.close();}} });
   tabs.on('close', function() {
     if (links.length <= 0)
       return ;
     var url = links.splice(0 ,1);
     tabs.open({ url: url[0], inBackground: true,
-                onLoad: function(tab){try{Screenshot(tab);}catch(err){tab.close();}} });
+                onLoad: function(tab){try{AnalyzePage(tab, function(){tab.close();});}catch(err){tab.close();}} });
   }); // tabs.on('close', function() { ... });
-}; // function BatchCrawl(event)
+}; // function BatchCrawl()
 
 /**
- * Take screenshot of a tab
+ * Analyze the web page: take screenshot, and save the results
  * @param tab       (<code>Tab</code>) The tab to be screenshot
  */
-const Screenshot = (tab) => {
-  const worker = tabs.activeTab.attach({ contentScriptFile:contentScripts });
+const AnalyzePage = (tab, callback) => {
+  const worker = tabs.activeTab.attach({contentScriptFile:contentScripts});
 
   // Get the web page screenshot as PNG image
   var window = require('sdk/window/utils').getMostRecentBrowserWindow();
@@ -141,24 +143,25 @@ const Screenshot = (tab) => {
   var ctx = canvas.getContext('2d');
   ctx.drawWindow(window, 0, 0, canvas.width, canvas.height, '#FFF');
   var filename = tab.url.replace(/\//g, '%E2').replace(/:/g, '%3A').replace(/\?/g, '%3F');
-  Cu.import('resource://gre/modules/Downloads.jsm');
-  Cu.import('resource://gre/modules/osfile.jsm')
+  Cu.import('resource://gre/modules/Services.jsm');
+  var fileNoExt = Services.dirsvc.get('DfltDwnld', Ci.nsIFile);
+  fileNoExt.append(filename);
   Cu.import('resource://gre/modules/Task.jsm');
   Task.spawn(function () {
-    yield Downloads.fetch(canvas.toDataURL().replace('image/png', 'image/octet-stream'),
-                          OS.Path.join(OS.Constants.Path.desktopDir, filename + '.png'));
+    Cu.import('resource://gre/modules/Downloads.jsm');
+    yield Downloads.fetch(canvas.toDataURL().replace('image/png', 'image/octet-stream'), fileNoExt.path + '.png');
   }).then(null, Cu.reportError);
 
   // Retrieve all results and save as TXT
   worker.port.emit('request-AnalyzePage', new Date().getTime());
   worker.port.on('response-AnalyzePage', function(time, msg) {
-    const {TextDecoder, TextEncoder} = Cu.import('resource://gre/modules/osfile.jsm', {});
+    const {TextDecoder, TextEncoder, OS} = Cu.import('resource://gre/modules/osfile.jsm', {});
     var encoder = new TextEncoder();
     var array = encoder.encode(msg);
-    var promise = OS.File.writeAtomic(OS.Path.join(OS.Constants.Path.desktopDir, filename + '.txt'), array,
-                                      {tmpPath:OS.Path.join(OS.Constants.Path.desktopDir, filename + '.tmp')});
-    console.log((counter++) + '/' + total + ' - ' + tab.url);
-    tab.close();
+    var promise = OS.File.writeAtomic(fileNoExt.path + '.txt', array, {tmpPath:fileNoExt.path + '.tmp'});
+    console.log(callback ? (counter++) + '/' + total + ' - ' + tab.url: 'AnalyzePage - ' + time + 'ms');
+    if (callback)
+      callback();
   }); // worker.port.on('response-AnalyzePage', function(time, msg) {});
 
-}; // function Screenshot(tab)
+}; // function AnalyzePage(tab, callback)
