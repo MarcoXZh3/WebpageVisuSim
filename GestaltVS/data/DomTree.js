@@ -27,7 +27,7 @@ function DomTreeNode(node) {
    */
   this.toString = function() {
     return this.nodeName + 
-           ': top=' + this.top + ',left=' + this.left + ',right=' + this.right + ',bottom=' + this.bottom;
+           ': top=' + this.top + ',left=' + this.left + ',width=' + this.width + ',height=' + this.height;
   }; // this.toString = function()
 
 } // function DomTreeNode(node)
