@@ -125,6 +125,7 @@ def deltaE2000(lab1, lab2):
     return deltaE
 # def deltaE2000(lab1, lab2)
 
+
 if __name__ == '__main__':
     conn = sqlite3.connect('databases/colorTest.db')
     c = conn.cursor()
