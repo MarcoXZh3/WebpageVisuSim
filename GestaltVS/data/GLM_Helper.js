@@ -181,6 +181,10 @@ function deltaE_CIE2000(lab1, lab2) {
  * @returns         {Boolean} True if they are same or false if not same
  */
 function sameColorByCIE2000(color1, color2) {
+  if (!color1 && !color2)
+    return true;
+  if (!color1 || !color2)
+    return false;
   var rgb1 = [color1.getRed(), color1.getGreen(), color1.getBlue()];
   var rgb2 = [color2.getRed(), color2.getGreen(), color2.getBlue()];
   return deltaE_CIE2000(RGBtoLAB(rgb1), RGBtoLAB(rgb2)) < 3.3;
