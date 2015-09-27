@@ -4,7 +4,7 @@ Created on Apr 21, 2015
 @author: MarcoXZh
 '''
 
-import re, zss, datetime, os, pylzma
+import re, zss, datetime, os, pylzma, base64
 from PyTree import PyTree, PyTreeNode
 from PIL import Image
 
@@ -140,23 +140,27 @@ def parseFiles():
     Parse all test case files
     Split DomTree, LayerTree and BlockTree into different files
     '''
-    for i in range(6, 10):
+    errorFile = os.path.join('databases', 'ParseFilesErrors.txt')
+    if os.path.exists(errorFile):
+        os.remove(errorFile)
+    for i in range(2, 10):
         path = os.path.join('databases', 'Subset%02d' % (i+1))
         files = os.listdir(path)
         files.sort()
         for f in files:
             if f[-4:] == '.png' or f[-7:] == '-DT.txt' or f[-7:] == '-LT.txt' or f[-7:] == '-BT.txt':
                 continue
-            if i == 6 and int(f[:-4]) <= 95:
+            if i == 2 and int(f[:-4]) <= 466:
                 continue
-            splitFile(os.path.join(path, f))
+            splitFile(os.path.join(path, f), (i, f, errorFile))
     pass # for i in range(10)
 pass # def parseFiles()
 
-def splitFile(filename):
+def splitFile(filename, errInfo):
     '''
     Split the data file into merging results, DomTree, LayerTree, and BlockTree
         @param filename:    {String} name of the data file
+        @param errInfo:     {Tuple} information for potential errors
         @return:            {Tuple} tuple of the target data
     '''
     print 'Parsing: %s' % filename
@@ -186,42 +190,46 @@ def splitFile(filename):
 
     # Parse the LayerTree
     layerTree = VisualTree.parseVisualTree(data[2])
+    updateVisualTree(layerTree, filename[:-4] + '.png', errInfo)
     f = open(filename[:-4] + '-LT.txt', 'w')
     f.write(str(layerTree))
     f.close()
 
     # Parse the BlockTree
     blockTree = VisualTree.parseVisualTree(data[3])
-    updateBlockTree(blockTree, filename[:-4] + '.png')
+    updateVisualTree(blockTree, filename[:-4] + '.png', errInfo)
     f = open(filename[:-4] + '-BT.txt', 'w')
     f.write(str(blockTree))
     f.close()
 
-    return mrs, domTree, layerTree, blockTree
-pass # def splitFile(filename)
+#     return mrs, domTree, layerTree, blockTree
+pass # def splitFile(filename, errInfo)
 
-def updateBlockTree(blockTree, imgPath):
+def updateVisualTree(blockTree, imgPath, errInfo):
     '''
-    Update the block tree
+    Update the visual tree
     set info to NCD between the render block and white image with same size
     @param blockTree:     {VisualTree} the block tree
     @param imgPath:       {String} the path of the image file
+    @param errInfo:       {Tuple} Information for potential errors
     '''
     
-    def updateSubtree(root, img):
+    def updateSubtree(root, img, errInfo):
+        try:
+            img.crop((root.left, root.top, root.left + root.width, root.top + root.height))\
+               .save('databases/tmp-img.png')
+            root.info = base64.b64encode(open('databases/tmp-img.png', 'rb').read())
+        except:
+            f = open(errInfo[2], 'a')
+            f.write('Subset_%02d: %s\n' % (errInfo[0], errInfo[1]))
+            f.close()
+        pass # try - except
         for child in root.children:
-            updateSubtree(child, img)
-        img.crop((root.left, root.top, root.left + root.width, root.top + root.height)).save('databases/tmp-img1.png')
-        Image.new('RGB', (root.width, root.height), '#FFF').save('databases/tmp-img2.png')
-        data1 = open('databases/tmp-img1.png', 'rb').read()
-        data2 = open('databases/tmp-img2.png', 'rb').read()
-        len1 = len(pylzma.compress(data1))
-        len2 = len(pylzma.compress(data2))
-        root.ncd = str(1.0 * (len(pylzma.compress(data1 + data2)) - min(len1, len2)) / max(len1, len2))
-    pass # def updateSubtree(root)
+            updateSubtree(child, img, errInfo)
+    pass # def updateSubtree(root, img, errInfo)
     img = Image.open(imgPath)
-    updateSubtree(blockTree.root, img)
-pass # def updateBlockTree1()
+    updateSubtree(blockTree.root, img, errInfo)
+pass # def updateVisualTree(root, img, errInfo)
 
 def treeEditDistance(visualTree1, visualTree2, useNCD):
     '''
@@ -258,7 +266,7 @@ def TestcaseTED(case):
     pass # if - elif - else
     if os.path.exists('databases/TEDs.txt'):
         os.remove('databases/TEDs.txt')
-    for i in range(1):
+    for i in range(10):
         path = os.path.join('databases', 'Subset%02d' % (i+1))
         files = os.listdir(path)
         files.sort()
@@ -276,6 +284,7 @@ def TestcaseTED(case):
                         continue
                     txt += line
                 pass # for line in f
+                print 'reading Subset%02d: %2d/50' % (i+1, j+1)
                 result.append(VisualTree.parseVisualTree(txt))
             pass # for k in cases
             results.append(result)
@@ -300,7 +309,9 @@ pass # def TestcaseTED()
 
 
 if __name__ == '__main__':
-    parseFiles()        # Split the results into different files, and calculate NCD for block trees
-#    TestcaseTED('All')
-    pass
+#     parseFiles()        # Split the results into different files, and calculate NCD for block trees
+    TestcaseTED('LayerTree')
+    exit(0)
+    TestcaseTED('BlockTree')
+    TestcaseTED('DomTree')
 pass # if __name__ == '__main__'
