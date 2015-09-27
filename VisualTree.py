@@ -241,7 +241,7 @@ def treeEditDistance(visualTree1, visualTree2, useNCD):
     @return:                {Integer} tree edit distance
     '''
     def builupTree(root, useNCD):
-        tree = zss.Node(root.ncd[4:root.ncd.find(', ')] if useNCD else root.nodeName)
+        tree = zss.Node(root.info if useNCD else root.nodeName)
         for child in root.children:
             tree.addkid(builupTree(child, useNCD))
         return tree
