@@ -286,7 +286,7 @@ def TestcaseTED(case, subset):
                     continue
                 txt += line
             pass # for line in f
-            print 'reading Subset%02d: %2d/50' % (subset, j / 5 + 1)
+            print 'reading Subset%02d: %2d/49' % (subset, j / 5 + 1)
             result.append(VisualTree.parseVisualTree(txt))
         pass # for k in cases
         results.append(result)
@@ -302,7 +302,7 @@ def TestcaseTED(case, subset):
             text = 'Subset%02d %4d/%4d -- %02d VS %02d:\t%s' % (subset, number, 1176, j, k, text)
             number += 1
             print text
-            f = open('databases/TEDs%s.txt' % case, 'a')
+            f = open('databases/TEDs%s-Subset%02d.txt' % (case, subset), 'a')
             f.write(text[:-1] + '\n')
             f.close()
     pass # for - for
