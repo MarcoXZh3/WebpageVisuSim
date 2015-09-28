@@ -1,10 +1,12 @@
+#!/usr/bin/python
+
 '''
 Created on Apr 21, 2015
 
 @author: MarcoXZh
 '''
 
-import re, zss, datetime, os, pylzma, base64
+import re, zss, datetime, os, base64, sys
 from PyTree import PyTree, PyTreeNode
 from PIL import Image
 
@@ -253,7 +255,7 @@ def treeEditDistance(visualTree1, visualTree2, useNCD):
     return zss.simple_distance(t1, t2)
 pass # def treeEditDistance(visualTree1, visualTree2)
 
-def TestcaseTED(case):
+def TestcaseTED(case, subset):
     cases = []
     if case == 'DomTree':
         cases = [(1, '-DT.txt')]
@@ -266,52 +268,50 @@ def TestcaseTED(case):
     pass # if - elif - else
     if os.path.exists('databases/TEDs.txt'):
         os.remove('databases/TEDs.txt')
-    for i in range(10):
-        path = os.path.join('databases', 'Subset%02d' % (i+1))
-        files = os.listdir(path)
-        files.sort()
-        results = []
-        number = 1
-        for j, f in enumerate(files):
-            if (f[-4:] == '.txt'):              # I only need the file name but not file extension,
-                continue                        # so here use PNG and skip TXTs
-            result = []
-            for k in cases:
-                txt = ''
-                f = open(os.path.join(path, f[:-4] + k[1]), 'r')
-                for line in f:
-                    if len(line.strip()) == 0:
-                        continue
-                    txt += line
-                pass # for line in f
-                print 'reading Subset%02d: %2d/50' % (i+1, j+1)
-                result.append(VisualTree.parseVisualTree(txt))
-            pass # for k in cases
-            results.append(result)
-        pass # for j, f in enumerate(files)
-        for j in range(len(results)):
-            for k in range(j+1, len(results)):
-                text = ''
-                for index, c in enumerate(cases):
-                    t = datetime.datetime.now()
-                    ted = treeEditDistance(results[j][index], results[k][index], True if c[1] == '-BT.txt' else False)
-                    text += '%s=%d, time=%s\t' % (c[1], ted, str(datetime.datetime.now() - t))
-                pass # for index, c in enumerate(cases)
-                text = 'Subset%02d %4d/%4d -- %02d VS %02d:\t%s' % ((i+1), number, 1225, j, k, text)
-                number += 1
-                print text
-                f = open('databases/TEDs.txt', 'a')
-                f.write(text[:-1] + '\n')
-                f.close()
-        pass # for - for
-    pass # for i in range(10)
+
+    path = os.path.join('databases', 'Subset%02d' % subset)
+    files = os.listdir(path)
+    files.sort()
+    results = []
+    number = 1
+    for j, f in enumerate(files):
+        if (f[-4:] == '.txt'):              # I only need the file name but not file extension,
+            continue                        # so here use PNG and skip TXTs
+        result = []
+        for k in cases:
+            txt = ''
+            f = open(os.path.join(path, f[:-4] + k[1]), 'r')
+            for line in f:
+                if len(line.strip()) == 0:
+                    continue
+                txt += line
+            pass # for line in f
+            print 'reading Subset%02d: %2d/50' % (subset, j / 5 + 1)
+            result.append(VisualTree.parseVisualTree(txt))
+        pass # for k in cases
+        results.append(result)
+    pass # for j, f in enumerate(files)
+    for j in range(len(results)):
+        for k in range(j+1, len(results)):
+            text = ''
+            for index, c in enumerate(cases):
+                t = datetime.datetime.now()
+                ted = treeEditDistance(results[j][index], results[k][index], True if c[1] != '-DT.txt' else False)
+                text += '%s=%d, time=%s\t' % (c[1], ted, str(datetime.datetime.now() - t))
+            pass # for index, c in enumerate(cases)
+            text = 'Subset%02d %4d/%4d -- %02d VS %02d:\t%s' % (subset, number, 1176, j, k, text)
+            number += 1
+            print text
+            f = open('databases/TEDs%s.txt' % case, 'a')
+            f.write(text[:-1] + '\n')
+            f.close()
+    pass # for - for
 pass # def TestcaseTED()
 
 
 if __name__ == '__main__':
 #     parseFiles()        # Split the results into different files, and calculate NCD for block trees
-    TestcaseTED('LayerTree')
-    exit(0)
-    TestcaseTED('BlockTree')
-    TestcaseTED('DomTree')
+#     TestcaseTED('LayerTree', int(sys.argv[1]))
+#     TestcaseTED('BlockTree', int(sys.argv[1]))
+    TestcaseTED('DomTree', int(sys.argv[1]))
 pass # if __name__ == '__main__'
