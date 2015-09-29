@@ -8,7 +8,7 @@ Created on Mar 13, 2015
 @author: MarcoXZh
 '''
 
-import math, sqlite3
+import math, sqlite3, random, os
 
 def RGBtoXYZ(rgb):
     if len(rgb) != 3:
@@ -125,8 +125,7 @@ def deltaE2000(lab1, lab2):
     return deltaE
 # def deltaE2000(lab1, lab2)
 
-
-if __name__ == '__main__':
+def createDatabase():
     conn = sqlite3.connect('databases/colorTest.db')
     c = conn.cursor()
     index = 0
@@ -147,4 +146,46 @@ if __name__ == '__main__':
         pass # for g in range(0, 256)
     pass # for r in range(0, 256)
     c.close()
+pass # def createDatabase()
+
+def calcColorDifference(numbers):
+    colors1 = set()
+    while len(colors1) < numbers:
+        colors1.add(random.randint(0, 16777215))             # 256^3 - 1
+    colors1 = list(colors1)
+    colors2 = set()
+    while len(colors2) < numbers:
+        colors2.add(random.randint(0, 16777215))             # 256^3 - 1
+    colors2 = list(colors2)
+    filename = os.path.join('databases', 'colorDiffs.txt')
+    if (os.path.exists(filename)):
+        os.remove(filename)
+
+    colorDiffs = [];
+    for i in range(numbers):
+        rgb1, rgb2 = colors1[i], colors2[i]
+        r1, g1, b1 = rgb1 / 65536, rgb1 % 65536 / 256, rgb1 % 256
+        r2, g2, b2 = rgb2 / 65536, rgb2 % 65536 / 256, rgb2 % 256
+        l1, a1, b1 = XYZtoLAB(RGBtoXYZ([r1, g1, b1]))
+        l2, a2, b2 = XYZtoLAB(RGBtoXYZ([r2, g2, b2]))
+        deltaE = deltaE2000([l1, a1, b1], [l2, a2, b2])
+        maxChannel = int(max(math.fabs(r1 - r2), math.fabs(g1 - g2), math.fabs(b1 - b2)))
+        euclideanDist = math.sqrt((r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2)
+        colorDiffs.append([rgb1, rgb2, l1, a1, b1, l2, a2, b2, deltaE, maxChannel, euclideanDist])
+    pass # for rgb in rgbs
+    digits = int(math.log(numbers, 10)) + 1
+    f = open(filename, 'w')
+    f.write('Number\tColor1\tColor2\tDeltaE\tMaxChnl\tEucDist\n')
+    for i, cd in enumerate(colorDiffs):
+        f.write('%d/%d\t#%06X\t#%06X\t%.4f\t%d\t%.4f\n' % (i+1, numbers, cd[0], cd[1], cd[-3], cd[-2], cd[-1]))
+        print ('%%%dd/%%%dd\t#%%06X\t#%%06X\t%%8.4f\t%%d\t%%8.4f' % (digits, digits)) % \
+              (i+1, numbers, cd[0], cd[1], cd[-3], cd[-2], cd[-1])
+    pass # for i, cd in enumerate(colorDiffs)
+    f.close()
+
+pass # def calcColorDifference(numbers)
+
+
+if __name__ == '__main__':
+    calcColorDifference(1000)
 pass # if __name__ == '__main__'

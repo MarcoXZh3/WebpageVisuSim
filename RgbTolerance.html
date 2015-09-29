@@ -69,12 +69,14 @@
       var color1 = parseInt(str1, 16);
       var color2 = parseInt(str2, 16);
       var r1 = Math.floor(color1 / 65536), g1 = Math.floor((color1 % 65536) / 256), b1 = color1 % 256;
-      var r2 = Math.floor(color2 / 65536), g2 = Math.floor((color2 % 65536) / 256), b2 = color1 % 256;
+      var r2 = Math.floor(color2 / 65536), g2 = Math.floor((color2 % 65536) / 256), b2 = color2 % 256;
       var rgbDiff = Math.max(Math.abs(r1 - r2), Math.abs(g1 - g2), Math.abs(b1 - b2));
       var deltaE = deltaE_CIE2000(RGBtoLAB([r1, g1, b1]), RGBtoLAB([r2, g2, b2]));
+      var eucDist = Math.sqrt(Math.pow(r1 - r2, 2) + Math.pow(g1 - g2, 2) + Math.pow(b1 - b2, 2));
       document.getElementById('colors-info').innerHTML = 'RGB(' + r1 + ', ' + g1 + ', ' + b1 + ') : RGB('
                                                                 + r2 + ', ' + g2 + ', ' + b2 + ') -- ' +
-                                                         'RGB_DIFF=' + rgbDiff + '; DeltaE_2000=' + deltaE;
+                                                         'RGB_DIFF=' + rgbDiff + '; EuclDist=' + eucDist +
+                                                         '; DeltaE_2000=' + deltaE;
     } // function updateColorDifference()
   </script>
   <script id="color-libraries">
