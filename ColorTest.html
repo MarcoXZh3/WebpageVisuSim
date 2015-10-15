@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title> Color Test </title></head>
+
+    <!-- https://www.npmjs.com/package/delta-e -->
+    <script src="https://cdn.rawgit.com/zschuessler/DeltaE/master/dist/deltae.global.min.js"></script>
+
+    <!-- https://github.com/gka/chroma.js/ -->
+    <script src="https://cdn.rawgit.com/gka/chroma.js/master/chroma.min.js"></script>
+
+    <script id="refreshDisplay">
+    function refreshDisplay(showColorValue) {
+      refreshColorPairs();
+      var rows = 10;
+      var display = document.getElementById('display');
+      display.innerHTML = '';
+      for (var i = 0; i < Math.ceil(1.0 * cpGroups.length / rows); i++) {
+        var divCol = document.createElement('div');
+        divCol.className = 'divCol';
+        display.appendChild(divCol);
+        divCol.setAttribute('style', 'margin-bottom:5%; padding:5px; float:left;');
+        divCol.style.padding = '2px';
+        for (var j = 0; j < rows; j++) {
+          var index = i * rows + j;
+          var divGroup = document.createElement('div');
+          divGroup.className = 'divGroup';
+          divCol.appendChild(divGroup);
+          divGroup.setAttribute('style', 'overflow:hidden;');
+          var label = document.createElement('label');
+          divGroup.appendChild(label);
+          label.setAttribute('style', 'font-weight:bold;');
+          label.innerHTML = '' + (index+1);
+          var radio = document.createElement('input');
+          divGroup.appendChild(radio);
+          radio.type = 'radio';
+          radio.name = 'group';
+          radio.value = index;
+          var divColors = document.createElement('div');
+          divColors.className = 'divColors';
+          divGroup.appendChild(divColors);
+          divColors.setAttribute('style', 'float:right;');
+          var divColor1 = document.createElement('div');
+          var divColor2 = document.createElement('div');
+          divColors.appendChild(divColor1);
+          divColors.appendChild(divColor2);
+          divColor1.innerHTML = '<code>Color1:</code>';
+          divColor2.innerHTML = '<code>Color2:</code>';
+          for (k in cpGroups[index]) {
+            var cp = cpGroups[index][k];
+            var span1 = document.createElement('code');
+            var span2 = document.createElement('code');
+            divColor1.appendChild(span1);
+            divColor2.appendChild(span2);
+            span1.innerHTML = showColorValue ? cp.color1 + ' ' + cp.eucDist.toPrecision(4) : '　　';
+            span2.innerHTML = showColorValue ? cp.color2 + ' ' + cp.deltaE.toPrecision(4) : '　　';
+            span1.style.backgroundColor = cp.color1;
+            span2.style.backgroundColor = cp.color2;
+            span1.style.margin = '0px 5px';
+            span2.style.margin = '0px 5px';
+          } // for (k in cpGroups[index])
+          divCol.appendChild(document.createElement('hr'));
+        } // for (var j = 0; j < rows; j++)
+      } // for (var i = 0; i < Math.ceil(cpGroups.length / rows); i++)
+    } // function refreshDisplay(showColorValue)
+    </script>
+
+    <script id="refreshColorPairs">
+    var cpGroups = [];
+    var count = 1;
+    function refreshColorPairs(szGroup, granularity) {
+      if (!szGroup)     szGroup = 5;
+      if (!granularity) granularity = 100;
+      cpGroups = [];
+      for (var i = 0; i < granularity; i++) {
+        var cpGroup = [];
+        for (var j = 0; j < szGroup; j++) {
+          do {
+            var color1 = chroma.random(), hex1 = color1.hex(), rgb1 = color1.rgb(), lab1 = color1.lab();
+            var color2 = chroma('000'), hex2, rgb2 = [0, 0, 0], lab2 = [0, 0, 0];
+            if (count %2 == 0) {
+              do {
+                rgb2[0] = Math.floor(rgb1[0] + Math.random() * (i+1) * 2 - (i+1));
+              } while (rgb2[0] < 0 || rgb2[0] > 255);
+              do {
+                rgb2[1] = Math.floor(rgb1[1] + Math.random() * (i+1) * 2 - (i+1));
+              } while (rgb2[1] < 0 || rgb2[1] > 255);
+              do {
+                rgb2[2] = Math.floor(rgb1[2] + Math.random() * (i+1) * 2 - (i+1));
+              } while (rgb2[2] < 0 || rgb2[2] > 255);
+              color2 = chroma(rgb2);
+              hex2 = color2.hex();
+              lab2 = color2.lab();
+            } else {
+              do {
+                lab2[0] = lab1[0] + (Math.random() < 0.5 ? -1*(i+1) : (i+1)) / 10.0;
+              } while (lab2[0] < 0 || lab2[0] > 100);
+              do {
+                lab2[1] = lab1[1] + (Math.random() < 0.5 ? -1*(i+1) : (i+1)) / 10.0;
+              } while (lab2[1] < -128 || lab2[1] > 127);
+              do {
+                lab2[2] = lab1[2] + (Math.random() < 0.5 ? -1*(i+1) : (i+1)) / 10.0;
+              } while (lab2[2] < -128 || lab2[2] > 127);
+              color2.set('lab.l', lab2[0]);
+              color2.set('lab.a', lab2[1]);
+              color2.set('lab.b', lab2[2]);
+              hex2 = color2.hex();
+              rgb2 = color2.rgb()
+            } // else - if (count %2 == 0)
+            var hex2 = color2.hex(), lab2 = color2.lab();
+            var deltaE = DeltaE.getDeltaE00({L: lab1[0], A: lab1[1], B: lab1[2]},
+                                            {L: lab2[0], A: lab2[1], B: lab2[2]});
+            var eucDist = Math.sqrt(Math.pow(lab1[0] - lab2[0], 2) +
+                                    Math.pow(lab1[1] - lab2[1], 2) +
+                                    Math.pow(lab1[2] - lab2[2], 2));
+          } while (count %2 == 0 ? eucDist <  i || eucDist > i+1
+                                 : deltaE < 0.1 * i || deltaE > 0.1 * (i+1));
+          cpGroup.push({color1:hex1, color2:hex2, deltaE:deltaE, eucDist:eucDist});
+        } // for (var j = 0; j < szGroup; j++)
+        cpGroups.push(cpGroup);
+      } // for (var i = 0; i < granularity; i++)
+    } // function refreshColorPairs()
+    </script>
+
+    <script id="updateResults">
+    function updateResults() {
+      var results = document.getElementById('results');
+      var query = document.querySelector('input[name="group"]:checked')
+      if (query) {
+        results.innerHTML = results.innerHTML.trimLeft() + count + ': Group ' + query.value + '\n';
+        var info = cpGroups[query.value];
+        console.log(info);
+        info.push({isRGB: count %2 == 0});
+        console.log(info);
+        info = JSON.stringify(info);
+        var hidden = document.getElementById('saveddata');
+        hidden.value += info + '\n';
+        count ++;
+      } // if (query)
+    } // function updateResults()
+    </script>
+
+    <script id="saveResults">
+    function saveResults() {
+      var hidden = document.getElementById('saveddata');
+      if (hidden.value == '')
+        return ;
+      var blob = new Blob([hidden.value], {type:'octet/stream'});
+      var download = document.createElement('a');
+      download.href = window.URL.createObjectURL(blob);
+      download.download = 'results.txt';
+      download.click();
+      cpGroups = [];
+      hidden.value = '';
+      document.getElementById('results').innerHTML = '';
+    } // function saveResults()
+    </script>
+
+</head>
+<body onload="refreshDisplay();">
+    <div>
+        <div style="width:500px; float:right; font-weight: bold;">Results:<br/>
+            <div style="border:1px solid; overflow:scroll; height:120px; margin:5px;">
+                <pre id="results" style="margin:5px;"></pre>
+            </div>
+        </div>
+        <h3>Brief introduction</h3>
+        <ul>
+            <li>Due to the intensive calculation, every click of the &ldquo;Next&rdquo; button has latency.
+                Please read after the colors are updated.</li>
+            <li>500 pairs of colors are split into 100 groups according to their color-difference values;</li>
+            <li>Color pairs in Group 1 have the least color differences;
+                Color pairs in Group 100 have the most color differences;</li>
+            <li>Please choose the <span style="font-weight:bold;">FIRST</span> group where you think
+                any Color1 is different from its corresponding Color2.</li> 
+            <li>After clicking &ldquo;Save&rdquo;, a &ldquo;results.txt&rdquo; will be downloaded.
+                Please send this file back to me.</li> 
+        </ul>
+        <!-- form action="">
+            <input type="button" value="Next" onclick="refreshDisplay();" />
+        </form-->
+        <input type="button" value="Next" onclick="updateResults();refreshDisplay();" />
+        <input type="button" value="Save" onclick="updateResults();saveResults();refreshDisplay();" />
+        <input type="hidden" value="" id="saveddata" />
+    </div>
+    <hr />
+    <div id="display" style="overflow:scroll; height:100%;"></div>
+</body>
+</html>
