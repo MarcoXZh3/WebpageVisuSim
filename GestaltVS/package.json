@@ -1,8 +1,8 @@
 {
-  "title": "GestaltVS",
+  "title": "Webpage Visual Similarity",
   "name": "gestaltvs",
   "version": "1.0.0",
-  "description": "Gestalt laws of grouping based web page visual similarity evaluation",
+  "description": "Evaluate webpage visual similarity by using Gestalt laws of grouping",
   "main": "index.js",
   "author": "MarcoXZh",
   "engines": {

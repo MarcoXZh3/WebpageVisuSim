@@ -1,2 +1,2 @@
-#GestaltVS
-Gestalt laws of grouping based web page visual similarity evaluation
+#Webpage Visual Similarity
+Evaluate webpage visual similarity by using Gestalt laws of grouping

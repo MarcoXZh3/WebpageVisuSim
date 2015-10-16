@@ -22,10 +22,10 @@ const {topSites, group} = require('./TopSites.js');
 var counter = 1, total = topSites.length;
 
 const contentScripts = [
-  data.url('lzma.js'),
-  data.url('lzma_worker.js'),
-  data.url('JsColor.js'),
-  data.url('GLM_Helper.js'),
+  data.url('libs/chroma.min.js'),
+  data.url('libs/deltae.global.min.js'),
+  data.url('libs/lzma_worker-min.js'),
+  data.url('libs/lzma-min.js'),
   data.url('GestaltLaws.js'),
   data.url('JsTree.js'),
   data.url('LayerTree.js'),
@@ -39,7 +39,7 @@ const contentScripts = [
  * Extension function units: button
  */
 const button = ToggleButton({
-  id: 'Btn-GestaltLM',
+  id: 'Btn-GestaltVS',
   label: _('addon_label'),
   icon: { '16': _('icon_16'), '32': _('icon_32'), '64': _('icon_64') },
   onChange: function(state) { if (state.checked)  panel.show({position: button}); }
