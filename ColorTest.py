@@ -8,7 +8,7 @@ Created on Mar 13, 2015
 @author: MarcoXZh
 '''
 
-import math, sqlite3, random, os
+import math, sqlite3, random, os, json
 from colormath.color_objects import sRGBColor, LabColor
 from colormath.color_conversions import convert_color
 from colormath.color_diff import delta_e_cie2000
@@ -89,15 +89,42 @@ def splitColorDiferrence():
     pass # for line in f
     print colorPairs[200]
 #     cps = sorted(colorPairs, key=lambda x: x['deltaE'])
-    
-
-
-
 pass # def splitColorDiferrence()
+
+def analyzeSurveyResults(path):
+    files = os.listdir(path)
+    files.sort();
+    resultsRGB, resultsLAB = [], []
+    for f in files:
+        resultRgb, resultLab = {}, {}
+        txt = open(os.path.join(path, f), 'r')
+        for line in txt:
+            cps = json.loads(line.strip())
+            assert len(cps) == 6
+            tolerance = math.ceil(cps[0]['eucDist']) if cps[-1]['isRGB'] else \
+                        math.ceil(cps[0]['deltaE'] * 10) / 10.0
+            for i in range(1, 5):
+                assert tolerance == math.ceil(cps[0]['eucDist']) if cps[-1]['isRGB'] else \
+                                    math.ceil(cps[0]['deltaE'] * 10) / 10.0
+            result = resultRgb if cps[-1]['isRGB'] else resultLab
+            tolerance = '%.1f' % tolerance
+            result[tolerance] = 1 if tolerance not in result else 1 + result[tolerance]
+        pass # for line in txt
+        resultsRGB.append(resultRgb)
+        resultsLAB.append(resultLab)
+        txt.close()
+    pass # for f in files
+    for r in resultsLAB:
+        print r
+    print 
+    for r in resultsRGB:
+        print r
+pass # def analyzeSurveyResults(path)
 
 
 if __name__ == '__main__':
 #     calcColorDifference(100000)
 #     splitColorDiferrence()
+    analyzeSurveyResults(os.path.join('databases', 'ColorTest'))
     pass
 pass # if __name__ == '__main__'
