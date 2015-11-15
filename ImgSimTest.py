@@ -83,16 +83,21 @@ def analyze(imgs1, imgs2):
                 pass
             finally:
                 t1 = datetime.datetime.now()
+                f = open(os.path.join('databases', 'ssim-results.txt'), 'a')
+                strSSIM = 'None' if not v else '%.4f' % v
+                f.write('i=%03d\tj=%03d\timg1=%-28s\timg2=%-28s\tssim=%s\ttime=%s\n' % \
+                        (i, j, path1, path2, strSSIM, str(t1 - t0)))
+                f.close()
                 print t1 - t0, v
             pass # try - except - finally
     pass # for - for
-    for i, v in enumerate(ssims):
-        print i, len(ssims), v
     return ssims
 pass # def analyze(imgs1, imgs2)
 
 
 if __name__ == '__main__':
+    f = open(os.path.join('databases', 'ssim-results.txt'), 'w')
+    f.close()
     numSubsets = 2
     for i in range(numSubsets):
         subset1 = os.path.join('databases', 'Subset%02d' % (i + 1))
@@ -105,10 +110,6 @@ if __name__ == '__main__':
 #             for x, img in enumerate(imgs2):
 #                 print x, len(imgs1), type(img[1]), img[1].size, img[0]
             results = analyze(imgs1, imgs2)
-            print results
-
-
-
 
 
         pass # for j in range(i+1, numSubsets)
