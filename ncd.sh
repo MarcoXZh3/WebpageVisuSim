@@ -3,7 +3,7 @@
 # https://github.com/DavyLandman/ncd
 #./ncds.py databases/Subset01/*.png > databases/re.txt
 
-max=2
+max=10
 output=databases/ncd-result.txt;
 
 for ((i = 1; i <= $max; i++)); do

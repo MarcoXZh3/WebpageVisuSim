@@ -56,63 +56,47 @@ def mse(imageA, imageB):
     # the two images are
     return err
 
-def analyze(imgs1, imgs2):
+def analyze(img01, img02):
     '''
     SSIM: http://isit.u-clermont1.fr/~anvacava/code.html
     '''
-    ssims = []
-    for i, (path1, img01) in enumerate(imgs1):
-        for j, (path2, img02) in enumerate(imgs2):
-            img1 = img01.copy()
-            img2 = img02.copy()
-            print i, j, path1, path2
-            t0 = datetime.datetime.now()
-            v = None
-            try:
-                width = max(img1.size[0], img2.size[0])
-                height = max(img1.size[1], img2.size[1])
-                if (width, height) != img1.size:
-                    img1 = img1.resize((width, height))
-                if (width, height) != img2.size:
-                    img2 = img2.resize((width, height))
-                img1 = numpy.reshape(numpy.array(img1.getdata()), (height, width))
-                img2 = numpy.reshape(numpy.array(img2.getdata()), (height, width))
-                v = ssim.compute_ssim(img1, img2)
-                ssims.append(v)
-            except:
-                pass
-            finally:
-                t1 = datetime.datetime.now()
-                f = open(os.path.join('databases', 'ssim-results.txt'), 'a')
-                strSSIM = 'None' if not v else '%.4f' % v
-                f.write('i=%03d\tj=%03d\timg1=%-28s\timg2=%-28s\tssim=%s\ttime=%s\n' % \
-                        (i, j, path1, path2, strSSIM, str(t1 - t0)))
-                f.close()
-                print t1 - t0, v
-            pass # try - except - finally
-    pass # for - for
-    return ssims
+    try:
+        img1 = img01.copy()
+        img2 = img02.copy()
+        width = max(img1.size[0], img2.size[0])
+        height = max(img1.size[1], img2.size[1])
+        if (width, height) != img1.size:
+            img1 = img1.resize((width, height))
+        if (width, height) != img2.size:
+            img2 = img2.resize((width, height))
+        img1 = numpy.reshape(numpy.array(img1.getdata()), (height, width))
+        img2 = numpy.reshape(numpy.array(img2.getdata()), (height, width))
+        return ssim.compute_ssim(img1, img2)
+    except:
+        return None
 pass # def analyze(imgs1, imgs2)
 
 
 if __name__ == '__main__':
     f = open(os.path.join('databases', 'ssim-results.txt'), 'w')
     f.close()
-    numSubsets = 2
+    numSubsets = 1
     for i in range(numSubsets):
-        subset1 = os.path.join('databases', 'Subset%02d' % (i + 1))
-        imgs1 = openImageFromSubset(subset1)
-        for j in range(i+1, numSubsets):
-            subset2 = os.path.join('databases', 'Subset%02d' % (j + 1))
-            imgs2 = openImageFromSubset(subset2)
-#             for x, img in enumerate(imgs1):
-#                 print x, len(imgs1), type(img[1]), img[1].size, img[0]
-#             for x, img in enumerate(imgs2):
-#                 print x, len(imgs1), type(img[1]), img[1].size, img[0]
-            results = analyze(imgs1, imgs2)
-
-
-        pass # for j in range(i+1, numSubsets)
+        imgs = openImageFromSubset(os.path.join('databases', 'Subset%02d' % (i + 1)))
+        f = open(os.path.join('databases', 'ssim-results%02d.txt' % (i+1)), 'w')
+        f.close()
+        for x in range(len(imgs)):
+            for y in range(x+1, len(imgs)):
+                path1, img1 = imgs[x]
+                path2, img2 = imgs[y]
+                print x, y, path1, path2
+                vSSIM = analyze(img1, img2)
+                print vSSIM
+                f = open(os.path.join('databases', 'ssim-results%02d.txt' % (i+1)), 'a')
+                strSSIM = 'None' if vSSIM is None else '%.4f' % vSSIM
+                f.write('i=%03d\tj=%03d\timg1=%-28s\timg2=%-28s\tssim=%s\n' % \
+                        (x, y, path1, path2, strSSIM))
+                f.close()
+        pass # for -for
     pass # for i in range(numSubsets)
-    pass
 pass # if __name__ == '__main__'
