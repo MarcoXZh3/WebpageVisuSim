@@ -89,7 +89,7 @@ if __name__ == '__main__':
             for y in range(x+1, len(imgs)):
                 path1, img1 = imgs[x]
                 path2, img2 = imgs[y]
-                print x, y, path1, path2
+                print 'subset:', i+1, '--', x+1, y+1, path1, path2
                 vSSIM = analyze(img1, img2)
                 print vSSIM
                 f = open(os.path.join('databases', 'ssim-results%02d.txt' % (i+1)), 'a')
