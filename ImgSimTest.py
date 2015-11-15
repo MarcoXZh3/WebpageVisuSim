@@ -4,7 +4,7 @@ Created on Nov 14, 2015
 @author: Marco
 '''
 
-import os, numpy, datetime, ssim, SSIM_Index
+import os, numpy, datetime, ssim
 from PIL import Image, ImageOps
 
 
@@ -77,8 +77,7 @@ def analyze(imgs1, imgs2):
                     img2 = img2.resize((width, height))
                 img1 = numpy.reshape(numpy.array(img1.getdata()), (height, width))
                 img2 = numpy.reshape(numpy.array(img2.getdata()), (height, width))
-#                 v = ssim.compute_ssim(img1, img2)
-                v = SSIM_Index.compute_ssim(img1, img2, 1)
+                v = ssim.compute_ssim(img1, img2)
                 ssims.append(v)
             except:
                 pass
