@@ -68,8 +68,8 @@ def calcSSIM(imageA, imageB):
     http://isit.u-clermont1.fr/~anvacava/code.html
     '''
     try:
-        img1 = ImageOps.grayscale(Image.open(imageA)).copy()
-        img2 = ImageOps.grayscale(Image.open(imageB)).copy()
+        img1 = ImageOps.grayscale(imageA.copy())
+        img2 = ImageOps.grayscale(imageB.copy())
         width = max(img1.size[0], img2.size[0])
         height = max(img1.size[1], img2.size[1])
         if (width, height) != img1.size:
@@ -97,23 +97,26 @@ if __name__ == '__main__':
                 print 'subset:', i+1, '--', x+1, y+1, path1, path2
 
                 # Calculate MSE
+                t1 = datetime.datetime.now()
                 vMSE = calcSMSE(img1, img2)
-                print vMSE
                 f = open(os.path.join('databases', 'mse-results%02d.txt' % (i+1)), 'a')
                 strMSE = 'None' if vMSE is None else '%.4f' % vMSE
                 f.write('i=%03d\tj=%03d\timg1=%-28s\timg2=%-28s\tmse=%s\n' % \
                         (x, y, path1, path2, strMSE))
                 f.close()
-                continue
+                t2 = datetime.datetime.now()
+                print 'MSE=%.4f; time=%s' % (vMSE, t2 - t1)
 
                 # Calculate SSIM
+                t1 = datetime.datetime.now()
                 vSSIM = calcSSIM(img1, img2)
-                print vSSIM
                 f = open(os.path.join('databases', 'ssim-results%02d.txt' % (i+1)), 'a')
                 strSSIM = 'None' if vSSIM is None else '%.4f' % vSSIM
                 f.write('i=%03d\tj=%03d\timg1=%-28s\timg2=%-28s\tssim=%s\n' % \
                         (x, y, path1, path2, strSSIM))
                 f.close()
+                t2 = datetime.datetime.now()
+                print 'SSIM=%.4f; time=%s' % (vMSE, t2 - t1)
 
         pass # for -for
     pass # for i in range(numSubsets)
