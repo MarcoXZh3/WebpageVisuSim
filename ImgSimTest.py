@@ -83,9 +83,97 @@ def calcSSIM(imageA, imageB):
         return None
 pass # def calcSSIM(imageA, imageB)
 
+def resultsCollecting(numSubsets):
+    alldata = []
+    for i in range(numSubsets):
+        data = []
+        # collect MSEs
+        f = open(os.path.join('databases', 'mse-results%02d.txt' % (i+1)), 'r')
+        for line in f:
+            cols = line.strip().split()
+            assert len(cols) == 5
+            data.append({'img1':cols[2][5:], 'img2':cols[3][5:], 'mse':float(cols[4][4:])})
+        pass # for line in f
+        f.close()
+        # Collect SSIMs
+        f = open(os.path.join('databases', 'ssim-results%02d.txt' % (i+1)), 'r')
+        index = 0
+        for line in f:
+            cols = line.strip().split()
+            assert len(cols) == 5 and data[index]['img1'] == cols[2][5:] and data[index]['img2'] == cols[3][5:]
+            data[index]['ssim'] = float(cols[4][5:])
+            index += 1
+        pass # for line in f
+        f.close()
+        assert index == len(data)
+        # Collect NCDs
+        # Pre-refine the raw results manually -- transpose the matrix
+        f = open(os.path.join('databases', '%02d.txt' % (i+1)), 'r')
+        index = 0
+        for line in f:
+            data[index]['ncd'] = float(line.strip())
+            index += 1
+        pass # for line in f
+        f.close()
+        assert index == len(data)
+        alldata += data
+    pass # for i in range(numSubsets)
+    assert len(alldata) == numSubsets * index
+
+    # B-TED, L-TED, D-TED
+    f = open(os.path.join('databases', 'TEDs-BT.txt'), 'r')
+    index = 0
+    for line in f:
+        cols = line.strip().split(',')
+        assert len(cols) == 2
+        cols = cols[0].split('=')
+        assert len(cols) == 2
+        alldata[index]['bted'] = int(cols[1])
+        index += 1
+    pass # for line in f
+    f.close()
+    assert index == len(alldata)
+    f = open(os.path.join('databases', 'TEDs-DT.txt'), 'r')
+    index = 0
+    for line in f:
+        cols = line.strip().split(',')
+        assert len(cols) == 2
+        cols = cols[0].split('=')
+        assert len(cols) == 2
+        alldata[index]['dted'] = int(cols[1])
+        index += 1
+    pass # for line in f
+    f.close()
+    assert index == len(alldata)
+    f = open(os.path.join('databases', 'TEDs-LT.txt'), 'r')
+    index = 0
+    for line in f:
+        cols = line.strip().split(',')
+        assert len(cols) == 2
+        cols = cols[0].split('=')
+        assert len(cols) == 2
+        alldata[index]['lted'] = int(cols[1])
+        index += 1
+    pass # for line in f
+    f.close()
+    assert index == len(alldata)
+
+    f = open(os.path.join('databases', 'img-results.txt'), 'w')
+    f.write('Image1\tImage2\tMSE\tSSIM\tNCD\tB-TED\tD-TED\tL-TED\n')
+    for d in alldata:
+        f.write('%s\t%s\t%.4f\t%.4f\t%.4f\t%4d\t%4d\t%4d\n' % \
+                (d['img1'], d['img2'], d['mse'], d['ssim'], d['ncd'], d['bted'], d['dted'], d['lted']))
+        print d
+    pass # for d in alldata
+    f.close()
+    return alldata
+pass # def resultsCollecting(numSubsets)
+
 
 if __name__ == '__main__':
     numSubsets = 10
+    resultsCollecting(numSubsets)
+    exit(0)
     for i in range(numSubsets):
         imgs = openImageFromSubset(os.path.join('databases', 'Subset%02d' % (i + 1)))
         f = open(os.path.join('databases', 'ssim-results%02d.txt' % (i+1)), 'w')
@@ -117,7 +205,6 @@ if __name__ == '__main__':
                 f.close()
                 t2 = datetime.datetime.now()
                 print 'SSIM=%.4f; time=%s' % (vMSE, t2 - t1)
-
-        pass # for -for
+        pass # for - for
     pass # for i in range(numSubsets)
 pass # if __name__ == '__main__'
